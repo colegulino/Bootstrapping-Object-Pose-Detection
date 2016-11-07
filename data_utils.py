@@ -8,6 +8,8 @@ import os.path
 
 import tensorflow as tf
 
+import pickle
+
 def read_int(f):
     return struct.unpack('i', f.read(4))[0]
 
@@ -121,6 +123,13 @@ class data_set:
 
         return transforms
 
+    def save_data(self, filename):
+        print("Saving images and other to: {}".format(filename))
+        with open(filename, 'wb') as f:
+            pickle.dump(self.images, f)
+            pickle.dump(self.labels, f)
+
+
 def _int64_feature(value):
     return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
 
@@ -146,8 +155,8 @@ def convert_to_TFRecord(data_set, name, out_data_path):
     print('Writing', filename)
     writer = tf.python_io.TFRecordWriter(filename)
     for i in images:
-        image_raw = images[i].tostring
-        raw_translations = translations[i].tostring
+        image_raw = images[i].tostring()
+        raw_translations = translations[i].tostring()
         example = tf.train.Example(features=tf.train.Features(feature={
             'height': _int64_feature(rows),
             'width': _int64_feature(cols),
@@ -157,7 +166,7 @@ def convert_to_TFRecord(data_set, name, out_data_path):
         writer.write(example.SerializeToString())
     writer.close()
 
-def read_and_decode(filename_queue, datashape):
+def read_and_decode(filename_queue, input_shape, label_shape):
     reader = tf.TFRecordReader()
     _, serialized_example = reader.read(filename_queue)
     features = tf.parse_single_example(
@@ -172,7 +181,7 @@ def read_and_decode(filename_queue, datashape):
     # length mnist.IMAGE_PIXELS) to a uint8 tensor with shape
     # [mnist.IMAGE_PIXELS].
     image = tf.decode_raw(features['image_raw'], tf.uint8)
-    image.set_shape([datashape])
+    image.set_shape([input_shape])
 
     # OPTIONAL: Could reshape into a 28x28 image and apply distortions
     # here.  Since we are not applying any distortions in this
@@ -184,10 +193,11 @@ def read_and_decode(filename_queue, datashape):
 
     # Convert label from a scalar uint8 tensor to an int32 scalar.
     label = tf.decode_raw(features['label'], tf.float32)
+    label.set_shape([label_shape])
 
     return image, label
 
-def inputs(file_name, batch_size, num_epochs, data_shape):
+def inputs(file_name, batch_size, num_epochs, input_shape, label_shape):
     if not num_epochs: num_epochs = None
 
     with tf.name_scope('input'):
@@ -195,7 +205,7 @@ def inputs(file_name, batch_size, num_epochs, data_shape):
 
         # Even when reading in multiple threads, share the filename
         # queue.
-        image, label = read_and_decode(filename_queue, data_shape)
+        image, label = read_and_decode(filename_queue, input_shape, label_shape)
 
         # Shuffle the examples and collect them into batch_size batches.
         # (Internally uses a RandomShuffleQueue.)
@@ -212,7 +222,8 @@ if __name__ == '__main__':
 
     # How to write a dataset to a TFRecord
     data_path = "/Users/colegulino/Desktop/ape/data/"
-    range_of_data = (0, 1235)
+    range_of_data = (0, 20)
     ape = data_set(data_path, range_of_data)
+    ape.save_data('ape_data.p')
     out_path = "/Users/colegulino/Desktop/"
     convert_to_TFRecord(ape, "ape", out_path)
