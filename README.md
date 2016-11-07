@@ -5,3 +5,6 @@ Members of Project:
 * Tushar Agrawal
 * Cole Gulino
 * Erik Sjoberg
+
+Dataset:
+* http://campar.in.tum.de/Main/StefanHinterstoisser
