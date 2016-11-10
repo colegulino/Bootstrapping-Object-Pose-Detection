@@ -7,4 +7,5 @@ Members of Project:
 * Erik Sjoberg
 
 Dataset:
-* http://campar.in.tum.de/Main/StefanHinterstoisser
+* LineMOD Dataset: http://campar.in.tum.de/Main/StefanHinterstoisser
+* Berkeley Instance Recognition Dataset: http://rll.berkeley.edu/bigbird/ 
