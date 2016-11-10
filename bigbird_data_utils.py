@@ -74,12 +74,12 @@ if __name__ == '__main__':
 
     file_path = '/home/cole/Downloads/detergent/masks/'
 
-    # triplets = build_triplets(load_bigbird(file_path))
+    triplets = build_triplets(load_bigbird(file_path))
     doubles = build_doubles(load_bigbird(file_path))
 
     with open('doubles_detergent.p', 'wb') as f:
         dill.dump(outpath,f)
         dill.load(f)
 
-    # with open('triplets_detergent.p', 'wb') as f:
-    #     pickle.dump(triplets, f)
+    with open('triplets_detergent.p', 'wb') as f:
+        pickle.dump(triplets, f)
