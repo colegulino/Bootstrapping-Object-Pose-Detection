@@ -9,3 +9,13 @@ Members of Project:
 Dataset:
 * LineMOD Dataset: http://campar.in.tum.de/Main/StefanHinterstoisser
 * Berkeley Instance Recognition Dataset: http://rll.berkeley.edu/bigbird/ 
+* ShapeNet: https://shapenet.org/
+-- Link to find all of synsetId: http://image-net.org/archive/words.txt or http://wordnetweb.princeton.edu/perl/webwn3.0
+-- Ex: airplane, aeroplane, plane -> 02691156
+
+Folders:
+* /autoencoder
+-- Simple autoencoder implementation on mnist dataset
+* /vae
+-- Simple variational autoencoder implementation on mnist dataset
+-- Paper: https://arxiv.org/pdf/1312.6114v10.pdf
