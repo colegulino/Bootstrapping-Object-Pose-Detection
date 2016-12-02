@@ -14,6 +14,8 @@ Dataset:
 -- Ex: airplane, aeroplane, plane -> 02691156
 * Voxel representation using binvox: http://www.patrickmin.com/binvox/
 -- Binvox command example: ./binvox ModelNet10/bathtub/train/bathtub_0101.off -d 50 -cb
+* More tooling help for importing binvox into python
+-- https://github.com/dimatura/binvox-rw-py
 
 Folders:
 * /autoencoder
