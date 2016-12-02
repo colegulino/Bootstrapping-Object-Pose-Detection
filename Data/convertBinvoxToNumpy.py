@@ -57,9 +57,11 @@ for t in ['train', 'test']:
                 if (model_class not in data[t]): data[t][model_class] = data_vec
                 else: data[t][model_class] = np.concatenate((data[t][model_class], data_vec), axis=0)
 
-outfile = 'numpyzip/class_split_data.p'
-with open(outfile, 'wb') as f:
-    pickle.dump(data, f)
+outfile = 'numpyzip/{}_{}.npz'
+for t in ['train', 'test']:
+    for model_class in models:
+        with open(outfile.format(t, model_class), 'wb') as f:
+            np.savez(f, data[t][model_class])
 
 sizepath = 'numpyzip/image_size.p'
 with open(sizepath, 'wb') as f:
