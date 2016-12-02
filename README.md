@@ -8,10 +8,12 @@ Members of Project:
 
 Dataset:
 * LineMOD Dataset: http://campar.in.tum.de/Main/StefanHinterstoisser
-* Berkeley Instance Recognition Dataset: http://rll.berkeley.edu/bigbird/ 
+* Berkeley Instance Recognition Dataset: http://rll.berkeley.edu/bigbird/
 * ShapeNet: https://shapenet.org/
 -- Link to find all of synsetId: http://image-net.org/archive/words.txt or http://wordnetweb.princeton.edu/perl/webwn3.0
 -- Ex: airplane, aeroplane, plane -> 02691156
+* Voxel representation using binvox: http://www.patrickmin.com/binvox/
+-- Binvox command example: ./binvox ModelNet10/bathtub/train/bathtub_0101.off -d 50 -cb
 
 Folders:
 * /autoencoder
