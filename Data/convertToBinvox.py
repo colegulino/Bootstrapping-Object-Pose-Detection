@@ -17,4 +17,4 @@ for model in models:
         for file in files:
             filepath = fullpath.format(model, t, file)
             # ./binvox ModelNet10/bathtub/train/bathtub_0101.off -d 50 -cb
-            subprocess.call(['./binvox', filepath, '-d', '50', '-cb'])
+            subprocess.call(['./binvox', filepath, '-d', '50', '-cb', '-pb'])
