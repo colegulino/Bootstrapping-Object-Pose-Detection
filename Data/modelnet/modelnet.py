@@ -11,10 +11,11 @@ class modelnet:
     # @param datapath Where the numpy data for the training and test data is
     # Default path is creating after running getModels.sh
     #
-    def __init__(self, datapath='numpyzip/class_split_data.p'):
+    def __init__(self, models = ['bathtub', 'chair', 'table', 'toilet', 'monitor']):
         # Open the dataset
-        self.datapath = datapath
         self.data = {}
+        self.datapath = 'numpyzip/{}_{}.npz'
+        self.models = models
 
         # Get the image size
         with open('numpyzip/image_size.p', 'rb') as f:
@@ -25,6 +26,17 @@ class modelnet:
         self.train_data = None
         self.validation_data = None
         self.test_data = None
+        self.get_datasets()
+        print("got dataset")
+        # Create objects
+        self.train_data = modelnetData(self.train_data, 'training', self.image_size)
+        self.validation_data = modelnetData(self.validation_data, 'validation', self.image_size)
+        self.test_data = modelnetData(self.test_data, 'test', self.image_size)
+
+    #
+    # Get datasets
+    #
+    def get_datasets(self):
         try:
             with open(self.final_datapath, 'rb') as f:
                 archive = np.load(f)
@@ -39,18 +51,20 @@ class modelnet:
             with open(self.final_datapath, 'wb') as f:
                 np.savez(f, self.train_data, self.validation_data, self.test_data)
 
-        # Create objects
-        self.train_data = modelnetData(self.train_data, 'training', self.image_size)
-        self.validation_data = modelnetData(self.validation_data, 'validation', self.image_size)
-        self.test_data = modelnetData(self.test_data, 'test', self.image_size)
-
     #
     # Load the dataset
     #
     def load_dataset(self):
+        data = {}
+        data['train'] = {}
+        data['test'] = {}
         try:
-            with open(self.datapath, 'rb') as f:
-                return pickle.load(f)
+            for t in ['train', 'test']:
+                for model_class in self.models:
+                    with open(self.datapath.format(t, model_class), 'rb') as f:
+                        archive = np.load(f)
+                        data[t][model_class] = archive['arr_0']
+            return data
         except IOError:
             print("File path expected as {}. Run getModels.sh to get the data".format(self.datapath))
 
