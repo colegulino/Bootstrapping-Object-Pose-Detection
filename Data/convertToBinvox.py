@@ -2,8 +2,8 @@
 
 # Get relevant models
 models = ['bathtub', 'chair', 'table', 'toilet', 'monitor']
-path = '/Users/colegulino/Desktop/Development/ModelNet10/{}/{}/'
-fullpath = '/Users/colegulino/Desktop/Development/ModelNet10/{}/{}/{}'
+path = 'ModelNet10/{}/{}/'
+fullpath = 'ModelNet10/{}/{}/{}'
 
 # Get all of the filenames in each folder and then run binvox
 from os import listdir
