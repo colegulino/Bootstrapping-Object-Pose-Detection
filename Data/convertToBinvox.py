@@ -2,8 +2,8 @@
 
 # Get relevant models
 models = ['bathtub', 'chair', 'table', 'toilet', 'monitor']
-path = '/Users/colegulino/Desktop/Development/ModelNet10/{}/{}/'
-fullpath = '/Users/colegulino/Desktop/Development/ModelNet10/{}/{}/{}'
+path = 'ModelNet10/{}/{}/'
+fullpath = 'ModelNet10/{}/{}/{}'
 
 # Get all of the filenames in each folder and then run binvox
 from os import listdir
@@ -17,4 +17,4 @@ for model in models:
         for file in files:
             filepath = fullpath.format(model, t, file)
             # ./binvox ModelNet10/bathtub/train/bathtub_0101.off -d 50 -cb
-            subprocess.call(['./binvox', filepath, '-d', '50', '-cb', '-pb'])
+            subprocess.call(['./binvox', filepath, '-d', '24', '-cb', '-pb'])

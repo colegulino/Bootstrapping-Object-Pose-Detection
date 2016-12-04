@@ -1,0 +1,5 @@
+*.pyc
+*.binvox
+*.off
+*.DS_Store
+
