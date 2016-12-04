@@ -23,3 +23,13 @@ Folders:
 * /vae
 -- Simple variational autoencoder implementation on mnist dataset
 -- Paper: https://arxiv.org/pdf/1312.6114v10.pdf
+* /vae_vox
+-- Variational autoencoder implementation on voxels
+
+
+
+# Run Instructions:
+-- Copy numpyzip folder from "Data/" to "autoencoder/" or "vae_vox/"
+-- Run the corresponding script. (<autoencoder/vox_example.py> or <vae_vox/vae.py>)
+-- The reconstructions should be displayed and data saved into numpy files.
+-- To replot the saved reconstructions in VAE: python3 plot_data.py <numpy_file>
