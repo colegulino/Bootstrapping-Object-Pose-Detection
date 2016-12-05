@@ -21,18 +21,22 @@ class variationalAutoEncoder():
         # Generate the model parameters before the hidden layer
         self.weights, self.biases = self.setUpParams(self.model_dimensions[:-1])
         # Generate the model parameters for the hidden layer
-        self.setUpLatentParams()
+        self.setUpLatentParams(model_dimensions)
+
+        for key, value in self.weights.items():
+            print("Layer: {} | Shape: {}".format(key, value))
+
+        for key, value in self.biases.items():
+            print("Layer: {} | Shape: {}".format(key, value))
 
         # Setup the operations for encoder and decoder for feedforward
         self.X = tf.placeholder("float", [None, model_dimensions[0]])
-        self.z_mean, self.z_sigma = self.encoder(self.X) # Get the parameters
+        self.z_mean, self.z_sigma = self.encoder(self.X, nonlin_fxn) # Get the parameters
         self.z = self.sampleLatent(self.z_mean, self.z_sigma) # Sample the Latent space
-        self.x_tild = self.decode(self.z) # Decode
-
-        self.decoder_op = self.decoder(self.encoder_op)
+        self.x_tild = self.decoder(self.z, nonlin_fxn) # Decode
 
         # Set up the operators for the output and predictions
-        self.y_pred = self.decoder_op
+        self.y_pred = self.x_tild
         self.y_true = self.X
 
 
@@ -67,13 +71,13 @@ class variationalAutoEncoder():
     #
     # Sets up the parameters for the hidden layers
     #
-    def setUpLatentParams(self):
+    def setUpLatentParams(self, model_dimensions):
         self.weights["encoder_W_mu"] = tf.Variable(tf.random_normal([model_dimensions[-2], model_dimensions[-1]]))
         self.weights["encoder_W_sig"] = tf.Variable(tf.random_normal([model_dimensions[-2], model_dimensions[-1]]))
-        self.weights["decoder_W_z"] = tf.Variable(tf.random_normal([model_dimensions[-2], model_dimensions[-1]]))
-        self.weights["encoder_b_mu"] = tf.Variable(tf.random_normal([model_dimensions[-1]]))
-        self.weights["encoder_b_sig"] = tf.Variable(tf.random_normal([model_dimensions[-1]]))
-        self.weights["decoder_b_z"] = tf.Variable(tf.random_normal([model_dimensions[-1]]))
+        self.weights["decoder_W_z"] = tf.Variable(tf.random_normal([model_dimensions[-1], model_dimensions[-2]]))
+        self.biases["encoder_b_mu"] = tf.Variable(tf.random_normal([model_dimensions[-1]]))
+        self.biases["encoder_b_sig"] = tf.Variable(tf.random_normal([model_dimensions[-1]]))
+        self.biases["decoder_b_z"] = tf.Variable(tf.random_normal([model_dimensions[-2]]))
 
     #
     # Encoder of the network
@@ -84,14 +88,15 @@ class variationalAutoEncoder():
     #
     def encoder(self, x, nonlin_fxn):
         # Get the output before the latent space
-        for i in range(1, len(model_dimensions)):
+        # for i in range(1, len(self.model_dimensions)):
+        for i in range(1, len(self.model_dimensions) - 1):
             x = nonlin_fxn(tf.add(tf.matmul(x, self.weights['encoder_W{}'.format(i)]),
                             self.biases['encoder_b{}'.format(i)]))
 
         z_mean = nonlin_fxn(tf.add(tf.matmul(x, self.weights['encoder_W_mu']),
-                                                self.bias['encoder_b_mu']))
+                                                self.biases['encoder_b_mu']))
         z_sigma = nonlin_fxn(tf.add(tf.matmul(x, self.weights['encoder_W_sig']),
-                                                 self.bias['encoder_b_sig']))
+                                                 self.biases['encoder_b_sig']))
 
         return z_mean, z_sigma
 
@@ -114,19 +119,18 @@ class variationalAutoEncoder():
     # @return Decoded output
     #
     def decoder(self, z, nonlin_fxn):
-        z = nonlin_fxn(tf.add(tf.matmul(x, self.weights['decoder_W_z']),
-                                            self.bias['decoder_b_z']))
-        for i in range(1, len(self.weights) - 2):
+        z = nonlin_fxn(tf.add(tf.matmul(z, self.weights['decoder_W_z']),
+                                            self.biases['decoder_b_z']))
+        for i in range(1, len(self.model_dimensions) - 1):
+            print('decoder_W{} | decoder_b{}'.format(i,i))
             z = tf.nn.sigmoid(tf.add(tf.matmul(z, self.weights['decoder_W{}'.format(i)]),
                               self.biases['decoder_b{}'.format(i)]))
 
         return z
 
+def s(x):
+    return x
+
 if __name__ == '__main__':
-    vae = variationalAutoEncoder([784, 100, 50, 2], 0.5, 0)
+    vae = variationalAutoEncoder([784, 100, 50, 2], 0.5, s)
 
-    for key, value in vae.weights.items():
-        print("Layer: {} | Shape: {}".format(key, value))
-
-    for key, value in vae.biases.items():
-        print("Layer: {} | Shape: {}".format(key, value))
