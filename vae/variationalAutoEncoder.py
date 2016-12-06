@@ -42,14 +42,6 @@ class variationalAutoEncoder():
 
         print("Weights: {}".format(self.weights))
         print("Biases: {}".format(self.biases))
-        # Generate the model parameters for the hidden layer
-        # self.setUpLatentParams(model_dimensions)
-
-        # for key, value in self.weights.items():
-        #     print("Layer: {} | Shape: {}".format(key, value))
-
-        # for key, value in self.biases.items():
-        #     print("Layer: {} | Shape: {}".format(key, value))
 
         # Setup the operations for encoder and decoder for feedforward
         self.X = tf.placeholder("float", [None, self.architecture['no_inputs']])
@@ -69,17 +61,6 @@ class variationalAutoEncoder():
         # Setup the optimizer
         self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate).minimize(self.cost)
 
-    # architecture = \
-    # {
-    #     'no_inputs' : data.input_dim,
-    #     'no_hidden_units' : 2,
-    #     'hidden_dims' : \
-    #     {
-    #         'h1' : 500,
-    #         'h2' : 500
-    #     },
-    #     'no_latent_dims' : 50
-    # }
     #
     # Function that sets up tensorflow variables that serve as the parameters of the model
     # Documentation on Variables: https://www.tensorflow.org/versions/r0.11/how_tos/variables/index.html
@@ -143,39 +124,6 @@ class variationalAutoEncoder():
         biases['encoder'] = encoder_biases
         biases['decoder'] = decoder_biases
         biases['latent'] = latent_biases
-        # Initialize the weight variables
-        # weights = {}
-        # for i in range(n):
-        #     weights["encoder_W{}".format(i + 1)] = \
-        #         tf.Variable(tf.random_normal([model_dimensions[i], model_dimensions[i+1]]), dtype=tf.float32)
-        #     weights["decoder_W{}".format(i + 1)] = \
-        #         tf.Variable(tf.random_normal([model_dimensions[n - i], model_dimensions[n - i - 1]]), dtype=tf.float32)
-
-        # weights ={
-        #     'encoder_W1' : tf.Variable(xavier_init(model_dimensions[0], model_dimensions[1])),
-        #     'encoder_W2' : tf.Variable(xavier_init(model_dimensions[1], model_dimensions[2])),
-        #     'encoder_W_mu' : tf.Variable(xavier_init(model_dimensions[2], model_dimensions[3])),
-        #     'encoder_W_sig' : tf.Variable(xavier_init(model_dimensions[2], model_dimensions[3])),
-        #     'decoder_W_z' : tf.Variable(xavier_init(model_dimensions[3], model_dimensions[2])),
-        #     'decoder_W1' : tf.Variable(xavier_init(model_dimensions[2], model_dimensions[1])),
-        #     'decoder_W2' : tf.Variable(xavier_init(model_dimensions[1], model_dimensions[0]))}
-
-        # biases ={
-        #     'encoder_b1' : tf.Variable(tf.zeros([model_dimensions[1]]), dtype=tf.float32),
-        #     'encoder_b2' : tf.Variable(tf.zeros([model_dimensions[2]]), dtype=tf.float32),
-        #     'encoder_b_mu' : tf.Variable(tf.zeros([model_dimensions[3]]), dtype=tf.float32),
-        #     'encoder_b_sig' : tf.Variable(tf.zeros([model_dimensions[3]]), dtype=tf.float32),
-        #     'decoder_b_z' : tf.Variable(tf.zeros([model_dimensions[2]]), dtype=tf.float32),
-        #     'decoder_b1' : tf.Variable(tf.zeros([model_dimensions[1]]), dtype=tf.float32),
-        #     'decoder_b2' : tf.Variable(tf.zeros([model_dimensions[0]]), dtype=tf.float32)}
-
-        # # # Initialize the bias variables
-        # biases = {}
-        # for i in range(1, len(model_dimensions)):
-        #     biases["encoder_b{}".format(i)] = \
-        #         tf.Variable(tf.random_normal([model_dimensions[i]]), dtype=tf.float32)
-        #     biases["decoder_b{}".format(i)] = \
-        #         tf.Variable(tf.random_normal([model_dimensions[n - i]]), dtype=tf.float32)
 
         return weights, biases
 
@@ -198,21 +146,6 @@ class variationalAutoEncoder():
     # @return Tuple (z_mean, z_sigma) - Tuple of the latent space model parameters
     #
     def encoder(self, x, nonlin_fxn):
-        # Get the output before the latent space
-        # l1 = nonlin_fxn(tf.add(tf.matmul(x, self.weights['encoder_W1']),
-        #                     self.biases['encoder_b1']))
-        # l2 = nonlin_fxn(tf.add(tf.matmul(l1, self.weights['encoder_W2']),
-        #                     self.biases['encoder_b2']))
-
-        # z_mean = tf.add(tf.matmul(l2, self.weights['encoder_W_mu']),
-        #                 self.biases['encoder_b_mu'])
-
-        # z_sigma = tf.add(tf.matmul(l2, self.weights['encoder_W_sig']),
-        #                 self.biases['encoder_b_sig'])
-
-        # return z_mean, z_sigma
-
-
         # Get the parameters
         weights = self.weights['encoder']
         biases = self.biases['encoder']
@@ -251,14 +184,6 @@ class variationalAutoEncoder():
     # @return Decoded output
     #
     def decoder(self, z, nonlin_fxn):
-        # l1 = nonlin_fxn(tf.add(tf.matmul(z, self.weights['decoder_W_z']),
-        #                                     self.biases['decoder_b_z']))
-
-        # l2 = nonlin_fxn(tf.add(tf.matmul(l1, self.weights['decoder_W1']),
-        #                     self.biases['decoder_b1']))
-        # return tf.nn.sigmoid(tf.add(tf.matmul(l2, self.weights['decoder_W2']),
-        #                     self.biases['decoder_b2'])), l1, l2
-
         # Get the parameters
         weights = self.weights['decoder']
         biases = self.biases['decoder']
