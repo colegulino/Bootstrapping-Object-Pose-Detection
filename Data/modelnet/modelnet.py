@@ -14,24 +14,34 @@ class modelnet:
     def __init__(self, models = ['bathtub', 'chair', 'table', 'toilet', 'monitor']):
         # Open the dataset
         self.data = {}
-        self.datapath = 'numpyzip/{}_{}.npz'
+        self.datapath = 'Data/numpyzip/{}_{}.npz'
         self.models = models
 
+        # # Get the class encodings
+        self.class_dict = {}
+        for i in range(len(models)):
+            self.class_dict[models[i]] = i
+
+        print("Class Dict: {}".format(self.class_dict))
+
         # Get the image size
-        with open('numpyzip/image_size.p', 'rb') as f:
+        with open('Data/numpyzip/image_size.p', 'rb') as f:
             self.image_size = pickle.load(f)
 
         # Get the data sets
-        self.final_datapath = 'numpyzip/data.npz'
+        self.final_datapath = 'Data/numpyzip/data.npz'
         self.train_data = None
         self.validation_data = None
         self.test_data = None
         self.get_datasets()
-        print("got dataset")
+
         # Create objects
-        self.train_data = modelnetData(self.train_data, 'training', self.image_size)
-        self.validation_data = modelnetData(self.validation_data, 'validation', self.image_size)
-        self.test_data = modelnetData(self.test_data, 'test', self.image_size)
+        self.train_data = modelnetData(self.train_data, self.train_labels, 'training', self.image_size)
+        self.validation_data = modelnetData(self.validation_data, self.validation_labels, 'validation', self.image_size)
+        self.test_data = modelnetData(self.test_data, self.test_labels, 'test', self.image_size)
+
+        # Dimension of data
+        self.input_dim = self.train_data.input_dim()
 
     #
     # Get datasets
@@ -43,13 +53,18 @@ class modelnet:
                 self.train_data = archive['arr_0']
                 self.validation_data = archive['arr_1']
                 self.test_data = archive['arr_2']
+                self.train_labels = archive['arr_3']
+                self.validation_labels = archive['arr_4']
+                self.test_labels = archive['arr_5']
         except IOError:
             print("No file {} was found. Reloading the data".format(self.final_datapath))
             self.data = self.load_dataset()
-            self.train_data, self.validation_data, self.test_data = self.construct_data()
+            self.train_data, self.validation_data, self.test_data, \
+                self.train_labels, self.validation_labels, self.test_labels = self.construct_data()
             # Save
             with open(self.final_datapath, 'wb') as f:
-                np.savez(f, self.train_data, self.validation_data, self.test_data)
+                np.savez(f, self.train_data, self.validation_data, self.test_data, \
+                            self.train_labels, self.validation_labels, self.test_labels)
 
     #
     # Load the dataset
@@ -73,8 +88,11 @@ class modelnet:
     #
     def construct_data(self):
         train_data = np.array([])
+        train_labels = np.array([])
         test_data = np.array([])
+        test_labels = np.array([])
         validation_data = np.array([])
+        validation_labels = np.array([])
 
         # Iterate through the various classes of the test set and construct
         # the validation and the training set
@@ -88,15 +106,21 @@ class modelnet:
             # Set training and validation
             if (train_data.size == 0): train_data = train_d
             else: train_data = np.concatenate((train_data, train_d), axis=0)
+            if (train_labels.size == 0): train_labels = np.repeat(self.class_dict[model_class], train_d.shape[0])
+            else: train_labels = np.concatenate((train_labels, np.repeat(self.class_dict[model_class], train_d.shape[0])))
             if (validation_data.size == 0): validation_data = valid_d
             else: validation_data = np.concatenate((validation_data, valid_d), axis=0)
+            if (validation_labels.size == 0): validation_labels = np.repeat(self.class_dict[model_class], valid_d.shape[0])
+            else: validation_labels =  np.concatenate((validation_labels, np.repeat(self.class_dict[model_class], valid_d.shape[0])))
 
         # Same thing for test set
         for model_class, data in self.data['test'].items():
             if (test_data.size == 0): test_data = data
             else: test_data = np.concatenate((test_data, data), axis=0)
+            if (test_labels.size == 0): test_labels = np.repeat(self.class_dict[model_class], data.shape[0])
+            else: test_labels = np.concatenate((test_labels, np.repeat(self.class_dict[model_class], data.shape[0])))
 
-        return train_data, validation_data, test_data
+        return train_data, validation_data, test_data, train_labels, validation_labels, test_labels
 
     #
     # Return the training set
@@ -121,13 +145,15 @@ class modelnetData:
     # Constructor
     #
     # @param data Data (numpy array)
+    # @param labels Labels of the data
     # @param name Typically 'train' or 'test'
     # @param image_size Size of the voxel images
     #
-    def __init__(self, data, name, image_size):
+    def __init__(self, data, labels, name, image_size):
         self.data = data
         self.shape = data.shape
         self.name = name
+        self.labels = labels
 
         self.image_size = image_size
         self.num_examples = data.shape[0]
@@ -141,6 +167,12 @@ class modelnetData:
     #
     def shape(self):
         return self.data.shape
+
+    #
+    # Get the size of an input
+    #
+    def input_dim(self):
+        return self.data.shape[1]
 
     #
     # Get name of the dataset
@@ -157,14 +189,14 @@ class modelnetData:
     #
     # Get data
     #
-    def data(self):
+    def get_data(self):
         return self.data
 
     #
     # Get labels (same as data)
     #
-    def labels(self):
-        return self.data
+    def get_labels(self):
+        return self.labels
 
     #
     # Number of examples
