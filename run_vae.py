@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import pickle
 
 # Internal packages
 import sys
@@ -21,7 +22,7 @@ print("Loaded the Data!")
 
 # Set up parameters
 learning_rate = 0.0001
-training_epochs = 10
+training_epochs = 1
 batch_size = 256
 display_step = 1
 examples_to_show = 10
@@ -61,6 +62,7 @@ def main():
         sess.run(init)
 
         total_batch = int(train.num_examples/batch_size)
+        latent_vals = {}
 
         for epoch in range(training_epochs):
             # Loop over all batches
@@ -90,36 +92,44 @@ def main():
             # Display logs per epoch step
             if epoch % display_step == 0:
                 print("Epoch:", '%04d' % (epoch+1), " | cost = ", "{:.9f}".format(c))
+                # myVAE.plot_2d_latent_space(test, sess)
+                latent_vals[epoch] = myVAE.getLatentParams(test.get_data(), sess)
 
-        print("Optimization Finished!")
+        # print("Optimization Finished!")
 
-        if(not load_params):
-            myVAE.save_params()
+        # # Save parameters
+        # if(True):
+        #     myVAE.save_params()
 
-        # # Shuffle the test input and plot the reconstruction
-        # random_indices = np.random.permutation(test.num_examples)
-        # test.data = test.data[random_indices, :]
-        # x_sample = test.data[:200]
-        # # x_sample = mnist.test.next_batch(100)[0]
-        # x_reconstruct = myVAE.reconstruct(x_sample, sess)
-        # print("Image Shape: {}".format(x_reconstruct.shape))
+        # Save latent values
+        # with open('latent_vals.p', 'wb') as f:
+        #     pickle.dump(latent_vals, f)
 
-        # plt.figure()
-        # for i in range(5):
-        #     a1 = plt.subplot(5, 2, 2*i + 1, projection='3d')
-        #     # plt.imshow(x_sample[i].reshape(24,24,24), vmin=0, vmax=1)
-        #     data_3d = np.reshape(test.data[i], (24,24,24))
-        #     # data_3d = np.reshape(modelnet.test_data.data[i], modelnet.image_size)
-        #     xx, yy, zz = np.where(data_3d > 0.1)
-        #     a1.scatter(xx,yy,zz)
-        #     plt.title("Test input")
-        #     a2 = plt.subplot(5, 2, 2*i + 2, projection='3d')
-        #     # plt.imshow(x_reconstruct[i].reshape(24,24,24), vmin=0, vmax=1)
-        #     data_3d = x_reconstruct[i].reshape(24,24,24)
-        #     xx2, yy2, zz2 = np.where(data_3d > 0.1)
-        #     a2.scatter(xx2,yy2,zz2)
-        #     plt.title("Reconstruction")
-        # plt.show()
+        # Shuffle the test input and plot the reconstruction
+        random_indices = np.random.permutation(test.num_examples)
+        test.data = test.data[random_indices, :]
+        x_sample = test.data[:200]
+        # x_sample = mnist.test.next_batch(100)[0]
+        x_reconstruct = vae.sample_binary(myVAE.reconstruct(x_sample, sess))
+        print(x_reconstruct)
+        print("Image Shape: {}".format(x_reconstruct.shape))
+
+        plt.figure()
+        for i in range(5):
+            a1 = plt.subplot(5, 2, 2*i + 1, projection='3d')
+            # plt.imshow(x_sample[i].reshape(24,24,24), vmin=0, vmax=1)
+            data_3d = np.reshape(test.data[i], (24,24,24))
+            # data_3d = np.reshape(modelnet.test_data.data[i], modelnet.image_size)
+            xx, yy, zz = np.where(data_3d > 0.1)
+            a1.scatter(xx,yy,zz)
+            plt.title("Test input")
+            a2 = plt.subplot(5, 2, 2*i + 2, projection='3d')
+            # plt.imshow(x_reconstruct[i].reshape(24,24,24), vmin=0, vmax=1)
+            data_3d = x_reconstruct[i].reshape(24,24,24)
+            xx2, yy2, zz2 = np.where(data_3d > 0.1)
+            a2.scatter(xx2,yy2,zz2)
+            plt.title("Reconstruction")
+        plt.show()
 
 
         # # Applying encode and decode over test set
@@ -134,5 +144,23 @@ def main():
         # plt.draw()
         # plt.waitforbuttonpress()
 
+def print_latent():
+    with open('latent_vals.p', 'rb') as f:
+        latent_vals = pickle.load(f)
+
+    class_colors = vae.generate_random_colors(len(data.class_dict))
+
+    labels = test.get_labels()
+
+    for key in latent_vals.keys():
+        fig = plt.figure(key)
+        fig.suptitle('Latent Space After {} Epochs'.format(key + 1))
+        for latent, c in zip(latent_vals[key], labels):
+            plt.scatter(latent[0], latent[1], c=class_colors[c, :])
+
+    plt.show()
+
 if __name__ == '__main__':
-    main()
+    # main()
+
+    print_latent()

@@ -4,6 +4,11 @@ import tensorflow as tf
 import numpy as np
 # Import pickle
 import pickle
+# Matplotlib
+import matplotlib.pyplot as plt
+# Time
+import time
+
 
 def xavier_init(fan_in, fan_out, constant=1):
     """ Xavier initialization of network weights"""
@@ -16,6 +21,9 @@ def xavier_init(fan_in, fan_out, constant=1):
 
 def sample_binary(probs):
     return (probs > np.random.rand(probs.shape[0], probs.shape[1])) * 1
+
+def generate_random_colors(number):
+    return np.random.rand(number, 3)
 
 class variationalAutoEncoder():
     #
@@ -42,6 +50,8 @@ class variationalAutoEncoder():
         self.learning_rate = learning_rate
         self.nonlin_fxn = nonlin_fxn
 
+        self.class_colors = generate_random_colors(5)
+
         if(load_params):
             self.weights, self.biases = self.load_params()
             print("Loaded the parameters")
@@ -65,6 +75,10 @@ class variationalAutoEncoder():
 
         # Setup the optimizer
         self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate).minimize(self.cost)
+
+    ##################################################################################################
+    #                                      Parameter Initialization
+    ##################################################################################################
 
     #
     # Function that sets up tensorflow variables that serve as the parameters of the model
@@ -135,6 +149,10 @@ class variationalAutoEncoder():
         biases['latent'] = latent_biases
 
         return weights, biases
+
+    ##################################################################################################
+    #                                     Model Definition
+    ##################################################################################################
 
     #
     # Encoder of the network
@@ -235,6 +253,10 @@ class variationalAutoEncoder():
     def getCost(self, x_tilde, x, z_mean, z_sigma):
         return self.crossEntropy(x_tilde, x) + self.KL(z_mean, z_sigma)
 
+    ##################################################################################################
+    #                             Sampling and Reconstructing Functions
+    ##################################################################################################
+
     #
     # Get latent params
     #
@@ -243,10 +265,11 @@ class variationalAutoEncoder():
     # @return z_mean, z_sigma
     #
     def getLatentParams(self, x, sess):
-        return sess.run([self.z_mean, self.z_sigma], feed_dict={self.X : x})
+        return sess.run([self.z_mean, self.z_sigma], feed_dict={self.X : x})[0]
 
     #
     # Get reconstruction
+    #
     # @param x - Input
     # @param sess - Tensorflow sesion
     # @return Reconstruciton
@@ -266,16 +289,28 @@ class variationalAutoEncoder():
         return sess.run([self.x_tilde], feed_dict={self.z : z})[0]
 
     #
-    # Helper function to initialize the weight and bias dicitonary
+    # Function to generate a plot of the latent space (must be 2 dimensional)
     #
-    def init_weight_and_biases_dict(self):
-        weights = {}
-        biases = {}
-        for t in ['decoder', 'encoder', 'latent']:
-            weights[t] = {}
-            biases[t] = {}
+    # @param test_data Test data
+    # @param sess Tensorflow session
+    #
+    def plot_2d_latent_space(self, test_data, sess):
+        assert self.architecture['no_latent_dims'] == 2, "2-D plotting only works for latent space in R2!"
+        # Get the latent representations
+        z = self.getLatentParams(test_data.get_data(), sess)
 
-        return weights, biases
+        # Get the labels of the data and random colors for plotting
+        labels = test_data.get_labels()
+
+        plt.ion()
+        for latent, c in zip(z, labels):
+            plt.scatter(latent[0], latent[1], c=self.class_colors[c, :])
+        plt.pause(0.05)
+
+
+    ##################################################################################################
+    #                                  Saving and Loading Functions
+    ##################################################################################################
 
     #
     # Save the parameters
@@ -284,9 +319,6 @@ class variationalAutoEncoder():
     # @param filename Name of the filepath to save the weights
     #
     def load_params(self):
-        # new_saver = tf.train.import_meta_graph('models/vae/my-model.meta')
-        # new_saver.restore(sess, tf.train.latest_checkpoint('./models/vae/'))
-
         # weights, biases = sess.run([self.weights, self.biases])
         path = 'models/vae/params/{}_{}_{}.npz'
 
@@ -296,9 +328,7 @@ class variationalAutoEncoder():
 
         weights, biases = self.init_weight_and_biases_dict()
 
-        print(arch)
         for param_type in arch:
-            print(param_type)
             with open(path.format(param_type[0], param_type[1], param_type[2]), 'rb') as f:
                 archive = np.load(f)
                 if(param_type[0] == 'W'):
@@ -308,30 +338,12 @@ class variationalAutoEncoder():
 
         return weights, biases
 
-        # # Save the weights
-        # for t in self.weights.keys():
-        #     for x in self.weights[t].keys():
-        #         with open(path.format('W', t, x), 'rb') as f:
-        #             archive = np.load(f)
-        #             self.weights[t][x] = archive['arr_0']
-
-        # # Save the biases
-        # types_of_biases = self.biases.keys()
-        # for t in self.biases.keys():
-        #     for x in self.biases[t].keys():
-        #         with open(path.format('b', t, x), 'rb') as f:
-        #             archive = np.load(f)
-        #             self.biases[t][x] = archive['arr_0']
-
     #
     # Load Parameters
     #
     # @param sess Tensorflow session
     #
     def save_params(self):
-        # saver = tf.train.Saver()
-        # saver.save(sess, 'models/vae/my-model')
-
         # weights, biases = sess.run([self.weights, self.biases])
         path = 'models/vae/params/{}_{}_{}.npz'
 
@@ -357,6 +369,19 @@ class variationalAutoEncoder():
             pickle.dump(architecture, f)
 
         print("Done saving the model!")
+
+    #
+    # Helper function to initialize the weight and bias dicitonary
+    #
+    def init_weight_and_biases_dict(self):
+        weights = {}
+        biases = {}
+        for t in ['decoder', 'encoder', 'latent']:
+            weights[t] = {}
+            biases[t] = {}
+
+        return weights, biases
+
 
 def s(x):
     return x
