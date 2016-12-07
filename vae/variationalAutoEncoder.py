@@ -8,6 +8,8 @@ import pickle
 import matplotlib.pyplot as plt
 # Time
 import time
+# UUID
+import uuid
 
 
 def xavier_init(fan_in, fan_out, constant=1):
@@ -320,7 +322,7 @@ class variationalAutoEncoder():
     #
     def load_params(self):
         # weights, biases = sess.run([self.weights, self.biases])
-        path = 'models/vae/params/{}_{}_{}.npz'
+        path = 'models/vae/deeper/params/{}_{}_{}.npz'
 
         # Load the architecture
         with open('models/vae/params/architecture.p', 'rb') as f:
@@ -345,7 +347,7 @@ class variationalAutoEncoder():
     #
     def save_params(self):
         # weights, biases = sess.run([self.weights, self.biases])
-        path = 'models/vae/params/{}_{}_{}.npz'
+        path = 'models/vae/deeper/params/{}_{}_{}.npz'
 
         architecture = []
 
