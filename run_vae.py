@@ -21,8 +21,8 @@ validation = data.get_validation()
 print("Loaded the Data!")
 
 # Set up parameters
-learning_rate = 0.0001
-training_epochs = 1
+learning_rate = 0.001
+training_epochs = 2000
 batch_size = 256
 display_step = 1
 examples_to_show = 10
@@ -33,12 +33,12 @@ load_params = True
 architecture = \
 {
     'no_inputs' : data.input_dim,
-    'no_hidden_units' : 2,
+    'no_hidden_units' : 3,
     'hidden_dims' : \
     {
         'h1' : 500,
         'h2' : 500,
-        'h3' : 500
+        'h3' : 100
     },
     'no_latent_dims' : 50
 }
@@ -51,6 +51,7 @@ def main():
     print("Initialized the Variables")
     print("Begin training")
 
+    costs = {}
     with tf.Session() as sess:
         # Set up autoencoder
         myVAE = vae.variationalAutoEncoder(architecture, learning_rate, tf.nn.elu, sess, load_params=load_params)
@@ -76,13 +77,11 @@ def main():
                         print(i)
                     print(batch_xs)
                     # Run optimization op (backprop) and cost op (to get loss value)
-                    x_tilde, l1, l2 = sess.run([myVAE.x_tild, myVAE.l1, myVAE.l2], feed_dict={myVAE.X:batch_xs})
+                    x_tilde = sess.run([myVAE.x_tild, myVAE.l1, myVAE.l2], feed_dict={myVAE.X:batch_xs})
                     z_mean, z_sig = sess.run([myVAE.z_mean, myVAE.z_sigma], feed_dict={myVAE.X:batch_xs})
                     print("Z_mean: {}".format(z_mean))
                     print("Z_sig: {}".format(z_sig))
                     print("X_tilde: {}".format(x_tilde))
-                    print("L1: {}".format(l1))
-                    print("L2: {}".format(l2))
                     recon_error, KL = sess.run([myVAE.reconError, myVAE.KLdiv], feed_dict={myVAE.X:batch_xs})
                     print("Reconstruction Error: {}".format(recon_error))
                     print("KL Divergence: {}".format(KL))
@@ -92,57 +91,68 @@ def main():
             # Display logs per epoch step
             if epoch % display_step == 0:
                 print("Epoch:", '%04d' % (epoch+1), " | cost = ", "{:.9f}".format(c))
+                costs[epoch] = c
                 # myVAE.plot_2d_latent_space(test, sess)
-                latent_vals[epoch] = myVAE.getLatentParams(test.get_data(), sess)
+                # latent_vals[epoch] = myVAE.getLatentParams(test.get_data(), sess)
 
-        # print("Optimization Finished!")
+        print("Optimization Finished!")
 
-        # # Save parameters
-        # if(True):
-        #     myVAE.save_params()
+        # Save parameters
+        if(True):
+            myVAE.save_params()
 
-        # Save latent values
+        # Save costs
+        with open('costs.p', 'wb') as f:
+            pickle.dump(costs, f)
+
+
+        # # Save latent values
         # with open('latent_vals.p', 'wb') as f:
         #     pickle.dump(latent_vals, f)
 
-        # Shuffle the test input and plot the reconstruction
-        random_indices = np.random.permutation(test.num_examples)
-        test.data = test.data[random_indices, :]
-        x_sample = test.data[:200]
-        # x_sample = mnist.test.next_batch(100)[0]
-        x_reconstruct = vae.sample_binary(myVAE.reconstruct(x_sample, sess))
-        print(x_reconstruct)
-        print("Image Shape: {}".format(x_reconstruct.shape))
+        # # Shuffle the test input and plot the reconstruction
+        # random_indices = np.random.permutation(test.num_examples)
+        # test.data = test.data[random_indices, :]
+        # x_sample = test.data[:200]
+        # # x_sample = mnist.test.next_batch(100)[0]
+        # x_reconstruct = vae.sample_binary(myVAE.reconstruct(x_sample, sess))
+        # print(x_reconstruct)
+        # print("Image Shape: {}".format(x_reconstruct.shape))
 
-        plt.figure()
-        for i in range(5):
-            a1 = plt.subplot(5, 2, 2*i + 1, projection='3d')
-            # plt.imshow(x_sample[i].reshape(24,24,24), vmin=0, vmax=1)
-            data_3d = np.reshape(test.data[i], (24,24,24))
-            # data_3d = np.reshape(modelnet.test_data.data[i], modelnet.image_size)
-            xx, yy, zz = np.where(data_3d > 0.1)
-            a1.scatter(xx,yy,zz)
-            plt.title("Test input")
-            a2 = plt.subplot(5, 2, 2*i + 2, projection='3d')
-            # plt.imshow(x_reconstruct[i].reshape(24,24,24), vmin=0, vmax=1)
-            data_3d = x_reconstruct[i].reshape(24,24,24)
-            xx2, yy2, zz2 = np.where(data_3d > 0.1)
-            a2.scatter(xx2,yy2,zz2)
-            plt.title("Reconstruction")
-        plt.show()
+        # plt.figure()
+        # for i in range(5):
+        #     a1 = plt.subplot(5, 2, 2*i + 1, projection='3d')
+        #     # plt.imshow(x_sample[i].reshape(24,24,24), vmin=0, vmax=1)
+        #     data_3d = np.reshape(test.data[i], (24,24,24))
+        #     # data_3d = np.reshape(modelnet.test_data.data[i], modelnet.image_size)
+        #     xx, yy, zz = np.where(data_3d > 0.1)
+        #     a1.scatter(xx,yy,zz)
+        #     plt.title("Test input")
+        #     a2 = plt.subplot(5, 2, 2*i + 2, projection='3d')
+        #     # plt.imshow(x_reconstruct[i].reshape(24,24,24), vmin=0, vmax=1)
+        #     data_3d = x_reconstruct[i].reshape(24,24,24)
+        #     xx2, yy2, zz2 = np.where(data_3d > 0.1)
+        #     a2.scatter(xx2,yy2,zz2)
+        #     plt.title("Reconstruction")
+        # plt.show()
 
+        # plt.figure()
+        # for i in range(5):
+        #     a1 = plt.subplot(5, 2, 2*i + 1, projection='3d')
+        #     # plt.imshow(x_sample[i].reshape(24,24,24), vmin=0, vmax=1)
+        #     data_3d = np.reshape(test.data[i], (24,24,24))
+        #     # data_3d = np.reshape(modelnet.test_data.data[i], modelnet.image_size)
+        #     xx, yy, zz = np.where(data_3d > 0.1)
+        #     a1.scatter(xx,yy,zz)
+        #     # plt.title("Test input")
+        #     # a2 = plt.subplot(5, 2, 2*i + 2, projection='3d')
+        #     # # plt.imshow(x_reconstruct[i].reshape(24,24,24), vmin=0, vmax=1)
+        #     # data_3d = x_reconstruct[i].reshape(24,24,24)
+        #     # xx2, yy2, zz2 = np.where(data_3d > 0.1)
+        #     # a2.scatter(xx2,yy2,zz2)
+        #     plt.title("Generated Data")
+        # plt.show()
 
-        # # Applying encode and decode over test set
-        # encode_decode = sess.run(
-        #     ae.y_pred, feed_dict={ae.X: test_data.images[:examples_to_show]})
-        # # Compare original images with their reconstructions
-        # f, a = plt.subplots(2, 10, figsize=(10, 2))
-        # for i in range(examples_to_show):
-        #     a[0][i].imshow(np.reshape(test_data.images[i], (28, 28)))
-        #     a[1][i].imshow(np.reshape(encode_decode[i], (28, 28)))
-        # f.show()
-        # plt.draw()
-        # plt.waitforbuttonpress()
 
 def print_latent():
     with open('latent_vals.p', 'rb') as f:
@@ -160,7 +170,107 @@ def print_latent():
 
     plt.show()
 
+def generate():
+
+    with tf.Session() as sess:
+        # Set up autoencoder
+        myVAE = vae.variationalAutoEncoder(architecture, learning_rate, tf.nn.elu, sess, load_params=load_params)
+        print("Setup the Model")
+
+        # Initialize all variables
+        init = tf.initialize_all_variables()
+
+        sess.run(init)
+
+        samples = myVAE.generate(5, sess)
+        plt.figure()
+        for i in range(5):
+            fig = plt.figure(i)
+            a1 = fig.add_subplot(1,1,1, projection='3d')
+            data_3d = np.reshape(samples[i, :], (24,24,24))
+            xx, yy, zz = np.where(data_3d > 0.1)
+            a1.scatter(xx,yy,zz)
+            plt.title("Generated Data")
+        plt.show()
+
+def voxel_fill():
+    labels = test.get_labels()
+
+    toilet_number = data.class_dict['bed']
+    print('Toilet Number: {}'.format(toilet_number))
+
+    idx = np.where(labels == toilet_number)
+    index = np.random.randint(idx[0].shape[0])
+    data_3d = np.reshape(test.data[idx[0][index], :], (24,24,24))
+    old_data = np.array(data_3d, copy=True)
+    print(test.image_size)
+
+    fig1 = plt.figure(1)
+    fig2 = plt.figure(2)
+    fig3 = plt.figure(3)
+    fig4 = plt.figure(4)
+    a1 = fig1.add_subplot(1,1,1, projection='3d')
+    a2 = fig2.add_subplot(1,1,1, projection='3d')
+    a3 = fig3.add_subplot(1,1,1, projection='3d')
+    a4 = fig4.add_subplot(1,1,1, projection='3d')
+
+    a1.set_xlim([0, 24])
+    a1.set_ylim([0, 24])
+    a1.set_zlim([0, 24])
+    a2.set_xlim([0, 24])
+    a2.set_ylim([0, 24])
+    a2.set_zlim([0, 24])
+    a3.set_xlim([0, 24])
+    a3.set_ylim([0, 24])
+    a3.set_zlim([0, 24])
+    a4.set_xlim([0, 24])
+    a4.set_ylim([0, 24])
+    a4.set_zlim([0, 24])
+
+    xx, yy, zz = np.where(data_3d > 0.1)
+    a1.scatter(xx,yy,zz)
+
+    s = data_3d[:12,:,:].shape
+
+    data_3d[:12,:,:] = np.zeros(s)
+
+    xx, yy, zz = np.where(data_3d > 0.1)
+    a2.scatter(xx,yy,zz)
+
+    data_3d[:12,:,:] = np.round(np.random.uniform(size=s))
+
+    xx, yy, zz = np.where(data_3d > 0.1)
+    a3.scatter(xx,yy,zz)
+
+    data_1d = np.reshape(data_3d, (1,data_3d.size))
+
+    with tf.Session() as sess:
+        # Set up autoencoder
+        myVAE = vae.variationalAutoEncoder(architecture, learning_rate, tf.nn.elu, sess, load_params=load_params)
+        print("Setup the Model")
+
+        # Initialize all variables
+        init = tf.initialize_all_variables()
+
+        sess.run(init)
+        for i in range(200):
+            data_1d = vae.sample_binary(myVAE.reconstruct(data_1d, sess))
+            data_3d = np.reshape(data_1d, (24,24,24))
+            data_3d[12:,:,:] = old_data[12:,:,:]
+            data_1d = np.reshape(data_3d, (1,data_3d.size))
+
+    data_3d = np.reshape(data_1d, (24,24,24))
+    data_3d[12:,:,:] = old_data[12:,:,:]
+    xx, yy, zz = np.where(data_3d > 0.1)
+    a4.scatter(xx,yy,zz)
+
+    plt.show()
+
 if __name__ == '__main__':
     # main()
 
-    print_latent()
+    voxel_fill()
+
+    # print_latent()
+
+    # generate()
